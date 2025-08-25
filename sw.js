@@ -1,17 +1,10 @@
-const CACHE_NAME = 'coin-calculator-cache-v1';
+const CACHE_NAME = 'coin-calculator-cache-v2';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/index.tsx',
-  '/App.tsx',
-  '/types.ts',
-  '/constants.ts',
-  '/components/CalculatorSection.tsx',
-  '/components/ChecklistItem.tsx',
-  '/components/FixedLeverageCalculator.tsx',
-  '/components/Icon.tsx',
-  '/components/InputGroup.tsx',
-  '/components/ResultItem.tsx',
+  '/manifest.json',
+  '/icon-192x192.png',
+  '/icon-512x512.png',
   'https://cdn.tailwindcss.com',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css'
 ];
