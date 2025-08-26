@@ -61,17 +61,67 @@
       transform: translateY(-2px);
     }
     .checklist-item {
-      display: flex;
-      align-items: center;
-      gap: 1rem; /* Consistent spacing between input and actions */
-      margin-bottom: 1rem;
-      padding: 0.75rem;
       background-color: #475569;
       border-radius: 0.5rem;
       transition: background-color 0.2s;
+      overflow: hidden;
     }
-    .checklist-item:hover {
+    .checklist-item-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .checklist-item-header:hover {
+      background-color: #5A6D7D;
+    }
+    .checklist-item-description {
+      flex-grow: 1;
+      font-weight: 600;
+      color: #F8FAFC;
+    }
+    .checklist-item-body {
+      padding: 0 1rem;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 0.35s ease-in-out, opacity 0.35s ease-in-out, padding 0.35s ease-in-out;
+      visibility: hidden;
+    }
+    .checklist-item.expanded .checklist-item-body {
+      padding: 1rem;
+      padding-top: 0.75rem;
+      max-height: 500px;
+      opacity: 1;
+      border-top: 1px solid #334155;
+      visibility: visible;
+    }
+    .details-textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid #64748B;
       background-color: #334155;
+      color: #F8FAFC;
+      font-size: 0.95rem;
+      resize: vertical;
+      transition: all 0.2s ease-in-out;
+    }
+    .details-textarea:focus {
+      outline: none;
+      border-color: #38BDF8;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+      background-color: #2D3A4B;
+    }
+    .chevron-icon {
+      transition: transform 0.3s ease-in-out;
+      color: #94A3B8;
+      flex-shrink: 0;
+    }
+    .checklist-item.expanded .chevron-icon {
+      transform: rotate(180deg);
     }
     .condition-description-input {
       flex-grow: 1; /* Allows the input to take up all available space */
@@ -83,6 +133,7 @@
       color: #F8FAFC;
       font-size: 1rem;
       transition: all 0.2s ease-in-out;
+      width: 100%; /* Ensure it takes full width in the new layout */
     }
     .condition-description-input:focus {
       outline: none;
@@ -126,12 +177,18 @@
     }
     .remove-condition-button {
       color: #F87171;
+      width: 100%;
+      border-radius: 0.5rem;
+      background-color: transparent;
+      border: 1px solid #F87171;
     }
     .remove-condition-button:hover {
-      background-color: #5A6D7D;
-      color: #EF4444;
+      background-color: rgba(239, 68, 68, 0.1);
+      color: #F87171;
+      transform: none; /* Override hover transform if any */
+      box-shadow: none; /* Override hover shadow if any */
     }
-    .add-condition-button {
+    .add-condition-button, .edit-conditions-button {
       background: linear-gradient(145deg, #10B981 0%, #059669 100%);
       color: #F8FAFC;
       border: none;
@@ -139,13 +196,15 @@
       padding: 1rem 0;
       font-size: 1.15rem;
       font-weight: 700;
-      margin-top: 1.5rem;
       cursor: pointer;
       transition: all 0.3s ease-in-out;
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
       width: 100%;
     }
-    .add-condition-button:hover {
+     .add-condition-button {
+       margin-top: 1.5rem;
+     }
+    .add-condition-button:hover, .edit-conditions-button:hover {
       background: linear-gradient(145deg, #059669 0%, #10B981 100%);
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
       transform: translateY(-3px);
@@ -368,17 +427,94 @@
         cursor: not-allowed;
     }
 
+    .conditions-summary {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #CBD5E1;
+      background-color: #475569;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+    }
+
+    /* Modal Styles */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(15, 23, 42, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+    }
+    .modal-content {
+      background-color: #1E293B;
+      padding: 2rem;
+      border-radius: 1rem;
+      border: 1px solid #334155;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      width: 90%;
+      max-width: 600px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #334155;
+    }
+    .modal-header h2 {
+      margin: 0;
+      font-size: 1.75rem;
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .modal-close-button {
+      background: none;
+      border: none;
+      color: #94A3B8;
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .modal-close-button:hover {
+      color: #E2E8F0;
+    }
+    .modal-body {
+      overflow-y: auto;
+      padding-right: 0.5rem; /* For scrollbar */
+    }
+
+    /* Scrollbar styling for modal body */
+    .modal-body::-webkit-scrollbar {
+      width: 8px;
+    }
+    .modal-body::-webkit-scrollbar-track {
+      background: #334155;
+      border-radius: 4px;
+    }
+    .modal-body::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 4px;
+    }
+    .modal-body::-webkit-scrollbar-thumb:hover {
+      background: #64748B;
+    }
+
 
     @media (max-width: 640px) {
       .container { margin: 1rem auto; padding: 1rem; }
       h1 { font-size: 2.625rem; margin-bottom: 1.5rem; }
       h2 { font-size: 1.875rem; margin-top: 2rem; margin-bottom: 1rem; padding-bottom: 0.5rem; }
       .section { padding: 1rem; margin-bottom: 1.5rem; }
-      .checklist-item {
-        padding: 0.6rem;
-        margin-bottom: 0.75rem;
-        gap: 0.75rem;
-      }
       .results-grid { grid-template-columns: 1fr; }
       .action-buttons-container { padding: 0.75rem; }
       .action-buttons { gap: 0.75rem; }
@@ -388,6 +524,14 @@
       .position-button { padding: 0.75rem 0.5rem; font-size: 1rem; }
       .tabs-container { margin-bottom: 1rem; }
       .tab-button { padding: 0.75rem 1rem; font-size: 0.9rem; }
+      .modal-content {
+        width: 95%;
+        padding: 1.5rem;
+        max-height: 85vh;
+      }
+      .modal-header h2 {
+        font-size: 1.5rem;
+      }
     }
   </style>
 <script type="importmap">

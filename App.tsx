@@ -16,32 +16,41 @@ const App: React.FC = () => {
     try {
       const savedConditions = localStorage.getItem('conditions');
       if (savedConditions) {
-        setConditions(JSON.parse(savedConditions));
+        const parsedConditions = JSON.parse(savedConditions) as (Omit<Condition, 'details'> & Partial<Pick<Condition, 'details'>>)[];
+        const migratedConditions = parsedConditions.map(c => ({
+          ...c,
+          id: c.id,
+          description: c.description,
+          status: c.status,
+          details: c.details || '',
+        }));
+        setConditions(migratedConditions);
       } else {
         setConditions(
           INITIAL_CONDITIONS_DESC.map((desc, index) => ({
             id: index + 1,
             description: desc,
+            details: '',
             status: 'X',
           }))
         );
       }
     } catch (error) {
-        console.error("Failed to parse conditions from localStorage", error);
-        // Fallback to initial conditions if parsing fails
-        setConditions(
-          INITIAL_CONDITIONS_DESC.map((desc, index) => ({
-            id: index + 1,
-            description: desc,
-            status: 'X',
-          }))
-        );
+      console.error("Failed to parse conditions from localStorage", error);
+      setConditions(
+        INITIAL_CONDITIONS_DESC.map((desc, index) => ({
+          id: index + 1,
+          description: desc,
+          details: '',
+          status: 'X',
+        }))
+      );
     }
   }, []);
-  
+
   useEffect(() => {
     if (conditions.length > 0) {
-        localStorage.setItem('conditions', JSON.stringify(conditions));
+      localStorage.setItem('conditions', JSON.stringify(conditions));
     }
   }, [conditions]);
 
@@ -51,6 +60,7 @@ const App: React.FC = () => {
     const newCondition: Condition = {
       id: newId,
       description: '',
+      details: '',
       status: 'X',
     };
     setConditions(prev => [...prev, newCondition]);
@@ -60,13 +70,13 @@ const App: React.FC = () => {
     const newConditions = conditions.filter(c => c.id !== id);
     setConditions(newConditions);
     if (newConditions.length === 0) {
-        localStorage.removeItem('conditions');
+      localStorage.removeItem('conditions');
     }
   };
 
-  const handleUpdateCondition = (id: number, description: string, status: ConditionStatus) => {
-    setConditions(prev => 
-      prev.map(c => (c.id === id ? { ...c, description, status } : c))
+  const handleUpdateCondition = (id: number, description: string, details: string, status: ConditionStatus) => {
+    setConditions(prev =>
+      prev.map(c => (c.id === id ? { ...c, description, details, status } : c))
     );
   };
 
@@ -75,45 +85,59 @@ const App: React.FC = () => {
     return conditions.every(c => c.status === 'O');
   }, [conditions]);
 
+  const metConditionsCount = useMemo(() => {
+    return conditions.filter(c => c.status === 'O').length;
+  }, [conditions]);
+
   return (
     <div className="container">
       <h1><Icon name="coins" className="mr-3" /> 코인 선물 트레이딩 시뮬레이터</h1>
 
       <div className="section">
-        <h2><Icon name="list-check" /> 진입조건 확인 (O/X)</h2>
-        <div>
-          {conditions.map(condition => (
-            <ChecklistItem
-              key={condition.id}
-              condition={condition}
-              onUpdate={handleUpdateCondition}
-              onRemove={handleRemoveCondition}
-            />
-          ))}
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="!m-0 !p-0 !border-none"><Icon name="list-check" /> 진입조건 확인</h2>
+          <span className="conditions-summary">
+            {metConditionsCount} / {conditions.length} 충족
+          </span>
+        </div>
+        <div className="space-y-3">
+          {conditions.length > 0 ? (
+            conditions.map(condition => (
+              <ChecklistItem
+                key={condition.id}
+                condition={condition}
+                onUpdate={handleUpdateCondition}
+                onRemove={handleRemoveCondition}
+              />
+            ))
+          ) : (
+            <p className="text-center text-gray-400 my-4">아직 추가된 조건이 없습니다.</p>
+          )}
         </div>
         <button onClick={handleAddCondition} className="add-condition-button">
           <Icon name="plus" className="mr-2" /> 조건 추가
         </button>
       </div>
 
+
       {allConditionsMet && (
         <div className="section">
-           <div className="tabs-container">
-                <button 
-                    className={`tab-button ${activeTab === 'variable' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('variable')}
-                >
-                    변동 레버리지
-                </button>
-                <button 
-                    className={`tab-button ml-auto ${activeTab === 'fixed' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('fixed')}
-                >
-                    고정 레버리지
-                </button>
-            </div>
-            {activeTab === 'variable' && <CalculatorSection />}
-            {activeTab === 'fixed' && <FixedLeverageCalculator />}
+          <div className="tabs-container">
+            <button
+              className={`tab-button ${activeTab === 'variable' ? 'active' : ''}`}
+              onClick={() => setActiveTab('variable')}
+            >
+              변동 레버리지
+            </button>
+            <button
+              className={`tab-button ml-auto ${activeTab === 'fixed' ? 'active' : ''}`}
+              onClick={() => setActiveTab('fixed')}
+            >
+              고정 레버리지
+            </button>
+          </div>
+          {activeTab === 'variable' && <CalculatorSection />}
+          {activeTab === 'fixed' && <FixedLeverageCalculator />}
         </div>
       )}
     </div>

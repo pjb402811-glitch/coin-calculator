@@ -3,6 +3,7 @@ export type ConditionStatus = 'O' | 'X';
 export interface Condition {
   id: number;
   description: string;
+  details: string;
   status: ConditionStatus;
 }
 
